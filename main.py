@@ -4,9 +4,7 @@ from rich.console import Console
 from rich.table import Table
 
 import config
-import fetch
-import features
-import predict
+import engine
 
 console = Console()
 
@@ -21,19 +19,17 @@ def main(top_n, refresh, target_date):
     """Predict Phish's most likely next songs from setlist history."""
     try:
         console.print('[bold]Loading setlist data...[/]')
-        merged = fetch.get_data(force_refresh=refresh)
-    except RuntimeError as e:
+        result, meta = engine.predict_next(top_n=top_n, target_date=target_date, force_refresh=refresh)
+    except (RuntimeError, ValueError) as e:
         console.print('[red]Error:[/] ' + str(e))
         raise SystemExit(1)
 
-    feats = features.compute_features(merged, target_date)
-    if feats.empty:
+    if result.empty:
         console.print('[red]No songs to score.[/]')
         raise SystemExit(1)
 
-    result = predict.predict(feats, top_n=top_n)
-
     note = 'all shows' if not target_date else 'target ' + target_date
+    note += ' · as of ' + meta['last_show_date']
     table = Table(title='Top ' + str(len(result)) + ' predicted Phish songs (' + note + ')')
     table.add_column('#', justify='right', style='cyan', no_wrap=True)
     table.add_column('Song', style='bold')

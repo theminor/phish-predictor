@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phish Predictor</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Phish Predictor</h1>
+      <div id="status" class="status">Loading…</div>
+    </header>
+
+    <nav class="tabs">
+      <button id="tab-predict" class="tab active">Predict next</button>
+      <button id="tab-backtest" class="tab">Backtest a show</button>
+    </nav>
+
+    <section class="controls">
+      <label>Top
+        <input id="top-n" type="number" min="1" max="200" value="20">
+      </label>
+      <label id="date-label">Target date <span class="hint">(optional)</span>
+        <input id="date" type="date">
+      </label>
+      <button id="refresh" class="secondary">Refresh data</button>
+    </section>
+
+    <div id="error" class="error hidden"></div>
+
+    <!-- Predict tab -->
+    <section id="view-predict" class="view">
+      <table id="predict-table" class="grid"></table>
+      <div id="predict-loading" class="loading hidden">Computing…</div>
+    </section>
+
+    <!-- Backtest tab -->
+    <section id="view-backtest" class="view hidden">
+      <div id="backtest-summary" class="summary"></div>
+      <div class="bt-columns">
+        <div class="bt-col">
+          <h3>Predicted (top <span id="bt-n">20</span>)</h3>
+          <ol id="bt-predicted" class="songlist"></ol>
+        </div>
+        <div class="bt-col">
+          <h3>Actual setlist</h3>
+          <ol id="bt-actual" class="songlist"></ol>
+        </div>
+      </div>
+      <div id="backtest-loading" class="loading hidden">Computing…</div>
+    </section>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

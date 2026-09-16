@@ -1,0 +1,60 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #0f1115;
+  color: #e6e6e6;
+}
+.container { max-width: 960px; margin: 0 auto; padding: 24px 16px 64px; }
+header h1 { margin: 0 0 4px; font-size: 26px; }
+.status { color: #8b93a7; font-size: 14px; min-height: 18px; }
+
+.tabs { display: flex; gap: 8px; margin: 20px 0 16px; }
+.tab {
+  background: #1a1e27; color: #cfd3dd; border: 1px solid #2a2f3a;
+  padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px;
+}
+.tab.active { background: #2f6fed; color: #fff; border-color: #2f6fed; }
+
+.controls {
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  background: #161a22; border: 1px solid #232834; border-radius: 10px;
+  padding: 14px 16px; margin-bottom: 18px;
+}
+.controls label { font-size: 14px; color: #cfd3dd; display: flex; align-items: center; gap: 8px; }
+.hint { color: #6b7280; font-size: 12px; }
+input {
+  background: #0f1115; color: #e6e6e6; border: 1px solid #2a2f3a;
+  border-radius: 6px; padding: 6px 8px; font-size: 14px;
+}
+input[type=number] { width: 72px; }
+button {
+  background: #2f6fed; color: #fff; border: none; border-radius: 8px;
+  padding: 8px 16px; font-size: 14px; cursor: pointer;
+}
+button.secondary { background: #232834; }
+button:hover { filter: brightness(1.1); }
+button:disabled { opacity: 0.5; cursor: default; }
+
+.error {
+  background: #3a1518; border: 1px solid #7f1d1d; color: #fecaca;
+  padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 14px;
+}
+.loading { color: #8b93a7; padding: 24px; text-align: center; }
+.hidden { display: none; }
+
+table.grid { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.grid th, table.grid td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #232834; }
+table.grid th { color: #8b93a7; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+table.grid td.num, table.grid th.num { text-align: right; }
+.bar-wrap { background: #1c2230; border-radius: 4px; height: 8px; width: 90px; overflow: hidden; }
+.bar { height: 100%; background: #2f6fed; border-radius: 4px; }
+
+.summary { font-size: 15px; margin-bottom: 16px; color: #cfd3dd; }
+.summary b { color: #fff; }
+.bt-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.bt-col h3 { font-size: 14px; color: #8b93a7; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.03em; }
+.songlist { margin: 0; padding-left: 22px; font-size: 14px; line-height: 1.7; }
+.songlist li.hit { color: #4ade80; font-weight: 600; }
+.songlist li.hit::marker { color: #4ade80; }
+@media (max-width: 640px) { .bt-columns { grid-template-columns: 1fr; } }

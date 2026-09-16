@@ -3,3 +3,5 @@ requests
 click
 rich
 python-dotenv
+fastapi
+uvicorn

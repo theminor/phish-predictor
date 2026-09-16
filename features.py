@@ -27,7 +27,7 @@ def _target_context(merged, target_date):
     return ctx
 
 
-def compute_features(merged, target_date=None):
+def compute_features(merged, target_date=None, context=None):
     merged = merged.copy()
     merged['showdate'] = pd.to_datetime(merged['showdate'])
     merged = merged.sort_values('showdate')
@@ -70,7 +70,7 @@ def compute_features(merged, target_date=None):
     base['freq_norm'] = (np.log1p(base['times_played']) / np.log1p(max_times)).clip(upper=1.0)
     base['trend_norm'] = (base['trend_25'] / config.TREND_CAP).clip(upper=1.0)
 
-    ctx = _target_context(merged, target_date)
+    ctx = context if context is not None else _target_context(merged, target_date)
     if ctx is not None:
         if ctx['venue']:
             venue_songs = set(merged[merged['venue'] == ctx['venue']]['songid'].unique())
