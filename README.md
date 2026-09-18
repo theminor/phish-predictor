@@ -20,8 +20,10 @@ and ranks the field.
 | `season_match` | How often played in that quarter (only with a target date) |
 
 The score is a weighted sum of the normalized features, minus a repeat
-penalty. Frequency is the strongest signal, recent momentum is second, and raw
-"overdue" adds little. Weights live in `config.py`.
+penalty. Frequency is the strongest signal, recent momentum is a strong second,
+a heavy repeat penalty (don't re-predict what just played) helps a lot, and raw
+"overdue" adds nothing by default. Weights live in `config.py` and can be
+overridden at runtime (see **Tuning the weights**).
 
 ## Setup
 
@@ -49,6 +51,12 @@ python main.py --refresh
 
 # Predict for a specific show date (adds venue/tour/day/season context)
 python main.py --date 2026-09-15
+
+# Override the scoring weights for this run only
+python main.py --weights freq=0.5,trend=0.7,repeat_penalty=0.35
+
+# Print the weights currently in effect (defaults / saved / --weights)
+python main.py --show-weights
 ```
 
 ## Web UI
@@ -71,6 +79,21 @@ Two views:
 
 The API key stays server-side in `.env`; the browser never sees it.
 
+There's also a **Weights** tab to tune the model (see below).
+
+## Tuning the weights
+
+The shipped weights come from a grid search that backtests the most recent 100
+shows, predicting each from only the shows before it. To tune them yourself:
+
+- **Web UI → Weights tab**: edit any weight, hit **Evaluate** to see the
+  average top-20 hits over the last N shows (with a per-show breakdown), then
+  **Save**. Saved weights are written to `weights.json`, which takes precedence
+  over `config.py` for both the web app and the CLI. **Reset to defaults**
+  deletes the saved file.
+- **CLI**: `python main.py --weights freq=0.5,trend=0.7` overrides for that run
+  only; `python main.py --show-weights` prints the weights in effect.
+
 ## How it works
 
 - `fetch.py` pulls `setlists` from the API and caches it in a local SQLite file
@@ -82,11 +105,12 @@ The API key stays server-side in `.env`; the browser never sees it.
 
 ## Notes
 
-- `phish.db` and `.env` are git-ignored.
+- `phish.db`, `.env`, and `weights.json` are git-ignored.
 - Only the `setlists` endpoint is used: it carries the song names plus
   venue/tour per set, which is all the model needs. (The `songs` endpoint's
   `artist` filter is unreliable — it means *original songwriter*, so it drops
   most of Phish's original catalog.)
-- The model is a transparent weighted heuristic, tuned by backtesting recent
-  shows. A learned model (per-show probabilities, song co-occurrence, set
-  structure) is the natural next step.
+- The model is a transparent weighted heuristic. The shipped weights are the
+  best found by a 100-show backtest grid search (~4.4 of the top 20 hit on
+  recent shows); a learned model (per-show probabilities, song co-occurrence,
+  set structure) is the natural next step.

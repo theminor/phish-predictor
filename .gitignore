@@ -1,5 +1,6 @@
 .venv/
 .env
 *.db
+weights.json
 __pycache__/
 *.pyc

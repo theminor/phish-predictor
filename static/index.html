@@ -16,6 +16,7 @@
     <nav class="tabs">
       <button id="tab-predict" class="tab active">Predict next</button>
       <button id="tab-backtest" class="tab">Backtest a show</button>
+      <button id="tab-weights" class="tab">Weights</button>
     </nav>
 
     <section class="controls">
@@ -50,6 +51,29 @@
         </div>
       </div>
       <div id="backtest-loading" class="loading hidden">Computing…</div>
+    </section>
+
+    <!-- Weights tab -->
+    <section id="view-weights" class="view hidden">
+      <p class="hint">
+        These weights drive the score. <b>Save</b> to persist them in
+        <code>weights.json</code> — the app and the CLI (<code>python main.py</code>)
+        both use saved weights. Preview how a set performs with
+        <b>Evaluate</b> before committing.
+      </p>
+      <div id="weights-form" class="weights-form"></div>
+      <div class="controls">
+        <button id="w-save">Save weights</button>
+        <button id="w-reset" class="secondary">Reset to defaults</button>
+        <label class="inline">Evaluate on last
+          <input id="w-n" type="number" min="5" max="100" value="20" style="width:4em">
+          shows
+        </label>
+        <button id="w-evaluate" class="secondary">Evaluate</button>
+        <span id="w-status" class="status"></span>
+      </div>
+      <div id="w-result" class="summary"></div>
+      <div id="w-loading" class="loading hidden">Backtesting…</div>
     </section>
   </div>
   <script src="/static/app.js"></script>

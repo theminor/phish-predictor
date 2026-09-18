@@ -1,6 +1,18 @@
 const $ = (id) => document.getElementById(id);
 let state = { view: 'predict', meta: null };
 
+const WEIGHT_ORDER = ['freq', 'trend', 'repeat_penalty', 'overdue', 'venue', 'tour', 'dow', 'season'];
+const WEIGHT_INFO = {
+  freq: 'Frequency — long-term play rate (dominant signal)',
+  trend: 'Trend — recent momentum, plays in the last 25 shows',
+  repeat_penalty: 'Repeat penalty — subtracted when played in the last 5 shows',
+  overdue: 'Overdue — shows since last played vs the song’s usual gap',
+  venue: 'Venue — ever played here (target date only)',
+  tour: 'Tour — played on that tour (target date only)',
+  dow: 'Day of week (target date only)',
+  season: 'Quarter of the year (target date only)',
+};
+
 function showError(msg) {
   const e = $('error');
   e.textContent = msg;
@@ -115,15 +127,101 @@ async function loadBacktest() {
   finally { $('backtest-loading').classList.add('hidden'); }
 }
 
+// ---- Weights tab ----
+
+function renderWeightsForm(weights) {
+  let html = '';
+  for (const key of WEIGHT_ORDER) {
+    if (!(key in weights)) continue;
+    html += '<label class="weight-row">' +
+      '<span class="weight-name"><span class="wkey">' + esc(key) + '</span>' +
+      '<span class="hint">' + esc(WEIGHT_INFO[key] || '') + '</span></span>' +
+      '<input class="weight-input" data-key="' + esc(key) + '" type="number" step="0.05" min="0" value="' + weights[key] + '">' +
+      '</label>';
+  }
+  $('weights-form').innerHTML = html;
+}
+
+function collectWeights() {
+  const w = {};
+  for (const input of document.querySelectorAll('.weight-input')) {
+    const val = parseFloat(input.value);
+    if (!isNaN(val) && val >= 0) w[input.dataset.key] = val;
+  }
+  return w;
+}
+
+async function loadWeights() {
+  const data = await api('/api/weights');
+  renderWeightsForm(data.weights);
+  $('w-status').textContent = data.has_overrides
+    ? 'Using saved weights from weights.json' : 'Using default weights';
+}
+
+function setWStatus(msg) { $('w-status').textContent = msg; }
+
+function refreshCurrentView() {
+  if (state.view === 'predict') loadPredict();
+  else if (state.view === 'backtest') loadBacktest();
+}
+
+async function saveWeights() {
+  try {
+    const w = collectWeights();
+    await api('/api/weights', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ weights: w }) });
+    setWStatus('Saved — now used by Predict, Backtest, and the CLI');
+    refreshCurrentView();
+  } catch (e) { setWStatus('Save failed: ' + e.message); }
+}
+
+async function resetWeights() {
+  try {
+    const data = await api('/api/weights', { method: 'DELETE' });
+    renderWeightsForm(data.weights);
+    setWStatus('Reset to defaults');
+    refreshCurrentView();
+  } catch (e) { setWStatus('Reset failed: ' + e.message); }
+}
+
+async function evaluateWeights() {
+  $('w-loading').classList.remove('hidden');
+  $('w-result').textContent = '';
+  try {
+    const n = parseInt($('w-n').value, 10) || 20;
+    const data = await api('/api/weights/evaluate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ weights: collectWeights(), n_shows: n, top_n: 20 }),
+    });
+    let bars = '';
+    for (const p of data.per_show.slice().reverse()) {
+      const pct = Math.round((p.hits / data.top_n) * 100);
+      bars += '<div class="ev-row"><span class="ev-date">' + esc(p.date) + '</span>' +
+        '<div class="ev-bar-wrap"><div class="ev-bar" style="width:' + pct + '%"></div></div>' +
+        '<span class="ev-hits">' + p.hits + '</span></div>';
+    }
+    $('w-result').innerHTML =
+      'These weights average <b>' + data.avg_hits + '</b> hits in the top ' + data.top_n +
+      ' over the last ' + data.n_shows + ' shows.' +
+      '<div class="ev-list">' + bars + '</div>';
+  } catch (e) { setWStatus('Evaluate failed: ' + e.message); }
+  finally { $('w-loading').classList.add('hidden'); }
+}
+
+// ---- view / events ----
+
 function setView(view) {
   state.view = view;
   $('tab-predict').classList.toggle('active', view === 'predict');
   $('tab-backtest').classList.toggle('active', view === 'backtest');
+  $('tab-weights').classList.toggle('active', view === 'weights');
   $('view-predict').classList.toggle('hidden', view !== 'predict');
   $('view-backtest').classList.toggle('hidden', view !== 'backtest');
+  $('view-weights').classList.toggle('hidden', view !== 'weights');
   $('date-label').querySelector('.hint').textContent =
     view === 'predict' ? '(optional)' : '(defaults to last show)';
-  if (view === 'predict') loadPredict(); else loadBacktest();
+  if (view === 'predict') loadPredict();
+  else if (view === 'backtest') loadBacktest();
+  else loadWeights();
 }
 
 async function doRefresh() {
@@ -133,7 +231,7 @@ async function doRefresh() {
   try {
     await api('/api/refresh', { method: 'POST' });
     await loadStatus(true);
-    if (state.view === 'predict') loadPredict(); else loadBacktest();
+    if (state.view !== 'weights') refreshCurrentView();
   } catch (e) { showError('Refresh failed: ' + e.message); }
   finally { btn.disabled = false; btn.textContent = 'Refresh data'; }
 }
@@ -141,11 +239,13 @@ async function doRefresh() {
 function init() {
   $('tab-predict').addEventListener('click', () => setView('predict'));
   $('tab-backtest').addEventListener('click', () => setView('backtest'));
+  $('tab-weights').addEventListener('click', () => setView('weights'));
   $('refresh').addEventListener('click', doRefresh);
-  $('top-n').addEventListener('change', () =>
-    state.view === 'predict' ? loadPredict() : loadBacktest());
-  $('date').addEventListener('change', () =>
-    state.view === 'predict' ? loadPredict() : loadBacktest());
+  $('w-save').addEventListener('click', saveWeights);
+  $('w-reset').addEventListener('click', resetWeights);
+  $('w-evaluate').addEventListener('click', evaluateWeights);
+  $('top-n').addEventListener('change', () => { if (state.view !== 'weights') refreshCurrentView(); });
+  $('date').addEventListener('change', () => { if (state.view !== 'weights') refreshCurrentView(); });
 
   loadStatus().then(() => loadPredict()).catch((e) => showError(e.message));
 }

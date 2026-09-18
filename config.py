@@ -9,15 +9,20 @@ MIN_TIMES_PLAYED = 3
 OVERDUE_CAP = 3.0   # A song 3x more overdue than its own cadence is "max overdue".
 TREND_CAP = 10.0    # Appearing in 10+ of the last 25 shows is "max trend".
 
-# Scoring weights. Frequency dominates; 'trend' (recent momentum) is the main
-# secondary signal; raw 'overdue' barely helps. 'repeat_penalty' is subtracted;
-# venue/tour/dow/season only apply with a target date. Tuned by backtesting the
-# most recent shows against a prediction made from only the shows before each.
+# Scoring weights. Frequency dominates; 'trend' (recent momentum) is a strong
+# signal; a heavy 'repeat_penalty' (don't predict what just played) helps a lot;
+# raw 'overdue' adds nothing by default. 'repeat_penalty' is subtracted;
+# venue/tour/dow/season only apply with a target date.
+#
+# Defaults come from a grid search over the last 100 shows, backtesting each
+# show against a prediction made only from the shows before it. Change these at
+# runtime via the web UI (Weights tab) or `python main.py --weights ...`; saved
+# overrides are written to weights.json and take precedence over this file.
 WEIGHTS = {
-    'overdue': 0.10,
+    'overdue': 0.0,
     'freq': 0.50,
-    'trend': 0.30,
-    'repeat_penalty': 0.10,
+    'trend': 0.70,
+    'repeat_penalty': 0.35,
     'venue': 0.10,
     'tour': 0.05,
     'dow': 0.05,
