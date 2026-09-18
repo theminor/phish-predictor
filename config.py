@@ -9,6 +9,10 @@ MIN_TIMES_PLAYED = 3
 OVERDUE_CAP = 3.0   # A song 3x more overdue than its own cadence is "max overdue".
 TREND_CAP = 10.0    # Appearing in 10+ of the last 25 shows is "max trend".
 
+# The venue feature only kicks in when a venue has at least this many shows of
+# history; below that, per-venue rates are pure noise and we stay neutral.
+MIN_VENUE_SHOWS = 8
+
 # Scoring weights. Frequency dominates; 'trend' (recent momentum) is a strong
 # signal; a heavy 'repeat_penalty' (don't predict what just played) helps a lot;
 # raw 'overdue' adds nothing by default. 'repeat_penalty' is subtracted;
@@ -21,9 +25,9 @@ TREND_CAP = 10.0    # Appearing in 10+ of the last 25 shows is "max trend".
 WEIGHTS = {
     'overdue': 0.0,
     'freq': 0.50,
-    'trend': 0.70,
+    'trend': 0.80,
     'repeat_penalty': 0.35,
-    'venue': 0.10,
+    'venue': 0.30,
     'tour': 0.05,
     'dow': 0.05,
     'season': 0.10,

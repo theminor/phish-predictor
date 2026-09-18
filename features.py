@@ -27,10 +27,31 @@ def _target_context(merged, target_date):
     return ctx
 
 
+def _venue_rate(merged, base, venue):
+    """Per-song play rate at a target venue, or all-NaN if it can't be trusted.
+
+    Returns the fraction of that venue's shows in which each song appeared
+    (0..1). When the venue has no known name or fewer than MIN_VENUE_SHOWS of
+    history we return NaN (treated as 0) so one-off venues don't inject noise.
+    """
+    if not venue:
+        return float('nan')
+    v = merged[merged['venue'] == venue]
+    v_shows = v['showid'].nunique()
+    if v_shows < config.MIN_VENUE_SHOWS:
+        return float('nan')
+    rate = v.groupby('songid')['showid'].nunique() / v_shows
+    return base['songid'].map(rate).fillna(0.0)
+
+
 def compute_features(merged, target_date=None, context=None):
     merged = merged.copy()
     merged['showdate'] = pd.to_datetime(merged['showdate'])
     merged = merged.sort_values('showdate')
+    # Count each song once per show: a reprise (same song twice in one night,
+    # e.g. a Tweezer reprise) is a single play, not two. Dropping the extra
+    # rows keeps every downstream count show-based.
+    merged = merged.drop_duplicates(subset=['songid', 'showid'])
 
     ordered_showids = merged['showid'].drop_duplicates().tolist()
     ordinal = {sid: i + 1 for i, sid in enumerate(ordered_showids)}
@@ -72,11 +93,7 @@ def compute_features(merged, target_date=None, context=None):
 
     ctx = context if context is not None else _target_context(merged, target_date)
     if ctx is not None:
-        if ctx['venue']:
-            venue_songs = set(merged[merged['venue'] == ctx['venue']]['songid'].unique())
-            base['venue_played'] = base['songid'].isin(venue_songs).astype(float)
-        else:
-            base['venue_played'] = float('nan')
+        base['venue_played'] = _venue_rate(merged, base, ctx.get('venue'))
         if ctx['tour']:
             tour_songs = set(merged[merged['tourname'] == ctx['tour']]['songid'].unique())
             base['tour_match'] = base['songid'].isin(tour_songs).astype(float)

@@ -113,7 +113,9 @@ def backtest(show_date, top_n=None, force_refresh=False, weights=None):
     feats = features.compute_features(history, context=ctx)
     predicted = predict.predict(feats, weights=weights, top_n=top_n)
 
-    actual = target_rows.sort_values(['setno', 'position'])['song'].tolist()
+    # Each song once, in set order (a Tweezer reprise counts as one play).
+    actual = list(dict.fromkeys(
+        target_rows.sort_values(['setno', 'position'])['song'].tolist()))
     pred_songs = predicted['song'].tolist()
     hits = [s for s in pred_songs if s in set(actual)]
 

@@ -14,16 +14,20 @@ and ranks the field.
 | `overdue` | Cadence-relative "due": shows since last played ÷ its normal gap |
 | `trend_25` | Times played in the last 25 shows (hot/cold momentum) |
 | `played_last_5` | Was it played in the last 5 shows? (penalized) |
-| `venue_played` | Ever played at the target venue (only with a target date) |
+| `venue_played` | How often played at the target venue vs elsewhere (recurring venues, target date) |
 | `tour_match` | Played on the target tour (only with a target date) |
 | `dow_match` | How often played on that day of week (only with a target date) |
 | `season_match` | How often played in that quarter (only with a target date) |
 
+Plays are counted **once per show**: a song reprised twice in a night (Tweezer
+does this a lot) counts as a single play, not two.
+
 The score is a weighted sum of the normalized features, minus a repeat
 penalty. Frequency is the strongest signal, recent momentum is a strong second,
 a heavy repeat penalty (don't re-predict what just played) helps a lot, and raw
-"overdue" adds nothing by default. Weights live in `config.py` and can be
-overridden at runtime (see **Tuning the weights**).
+"overdue" adds nothing by default. When you supply a target date at a venue that
+Phish have played before, that venue's own song rates matter too. Weights live in
+`config.py` and can be overridden at runtime (see **Tuning the weights**).
 
 ## Setup
 

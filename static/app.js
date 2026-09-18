@@ -7,7 +7,7 @@ const WEIGHT_INFO = {
   trend: 'Trend — recent momentum, plays in the last 25 shows',
   repeat_penalty: 'Repeat penalty — subtracted when played in the last 5 shows',
   overdue: 'Overdue — shows since last played vs the song’s usual gap',
-  venue: 'Venue — ever played here (target date only)',
+  venue: 'Venue — how often played here (recurring venues, target date only)',
   tour: 'Tour — played on that tour (target date only)',
   dow: 'Day of week (target date only)',
   season: 'Quarter of the year (target date only)',
