@@ -78,7 +78,8 @@ def predict_next(top_n=None, target_date=None, force_refresh=False, weights=None
         top_n = config.DEFAULT_TOP_N
     merged = fetch.get_data(force_refresh=force_refresh)
     feats = features.compute_features(merged, target_date)
-    result = predict.predict(feats, weights=weights, top_n=top_n)
+    plays = merged[['songid', 'showid']].drop_duplicates()
+    result = predict.predict(feats, weights=weights, top_n=top_n, plays=plays)
     return result, _metadata(merged)
 
 
@@ -111,7 +112,8 @@ def backtest(show_date, top_n=None, force_refresh=False, weights=None):
     # (gap/freq/trend/venue-played) come from history only, to avoid leakage.
     ctx = features._target_context(merged, str(target.date()))
     feats = features.compute_features(history, context=ctx)
-    predicted = predict.predict(feats, weights=weights, top_n=top_n)
+    plays = history[['songid', 'showid']].drop_duplicates()
+    predicted = predict.predict(feats, weights=weights, top_n=top_n, plays=plays)
 
     # Each song once, in set order (a Tweezer reprise counts as one play).
     actual = list(dict.fromkeys(
@@ -155,7 +157,8 @@ def evaluate_weights(n_shows=20, top_n=None, force_refresh=False, weights=None):
             continue
         actual = set(merged.loc[merged['showdate'] == d, 'song'])
         feats = features.compute_features(history)
-        top = set(predict.predict(feats, weights=weights, top_n=top_n)['song'])
+        plays = history[['songid', 'showid']].drop_duplicates()
+        top = set(predict.predict(feats, weights=weights, top_n=top_n, plays=plays)['song'])
         per_show.append({
             'date': str(pd.Timestamp(d).date()),
             'hits': len(top & actual),

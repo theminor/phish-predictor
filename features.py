@@ -85,6 +85,18 @@ def compute_features(merged, target_date=None, context=None):
     base['expected_gap'] = total_shows / base['times_played']
     base['overdue'] = base['gap'] * base['base_rate']
 
+    # Era: recency-decay-weighted play rate. Recent shows (and new music) count
+    # more than shows from years ago, so a song still in rotation stays "hot"
+    # while one that faded years ago drops out. Rates are normalized over
+    # distinct shows (not rows) so they sit on the same 0..1 scale as base_rate.
+    decay = 0.5 ** (1.0 / config.ERA_HALFLIFE_SHOWS)
+    uniq = merged[['showid', 'show_ord']].drop_duplicates('showid').copy()
+    uniq['show_w'] = decay ** (total_shows - uniq['show_ord'])
+    total_w = uniq['show_w'].sum()
+    wmap = uniq.set_index('showid')['show_w']
+    era_w = merged['showid'].map(wmap).groupby(merged['songid']).sum()
+    base['era_rate'] = (base['songid'].map(era_w).fillna(0.0) / total_w).astype(float)
+
     # Normalized features for scoring (all roughly 0..1).
     max_times = max(base['times_played'].max(), 1)
     base['overdue_norm'] = (base['overdue'] / config.OVERDUE_CAP).clip(upper=1.0)

@@ -1,10 +1,12 @@
 const $ = (id) => document.getElementById(id);
 let state = { view: 'predict', meta: null };
 
-const WEIGHT_ORDER = ['freq', 'trend', 'repeat_penalty', 'overdue', 'venue', 'tour', 'dow', 'season'];
+const WEIGHT_ORDER = ['freq', 'trend', 'era', 'cooc', 'repeat_penalty', 'overdue', 'venue', 'tour', 'dow', 'season'];
 const WEIGHT_INFO = {
   freq: 'Frequency — long-term play rate (dominant signal)',
   trend: 'Trend — recent momentum, plays in the last 25 shows',
+  era: 'Era — recency-weighted rate (keeps current rotation + new music hot)',
+  cooc: 'Co-occurrence — boost songs that tend to play with the top picks',
   repeat_penalty: 'Repeat penalty — subtracted when played in the last 5 shows',
   overdue: 'Overdue — shows since last played vs the song’s usual gap',
   venue: 'Venue — how often played here (recurring venues, target date only)',

@@ -11,9 +11,11 @@ and ranks the field.
 | Feature | Meaning |
 |---------|---------|
 | `freq` (base_rate) | Share of all shows the song has appeared in (long-term frequency) |
-| `overdue` | Cadence-relative "due": shows since last played ÷ its normal gap |
+| `era_rate` | Recency-weighted play rate — recent shows (and new music) count more |
 | `trend_25` | Times played in the last 25 shows (hot/cold momentum) |
+| `cooc` | Co-occurrence lift with the top picks ("if X plays, Y likely plays") |
 | `played_last_5` | Was it played in the last 5 shows? (penalized) |
+| `overdue` | Cadence-relative "due": shows since last played ÷ its normal gap |
 | `venue_played` | How often played at the target venue vs elsewhere (recurring venues, target date) |
 | `tour_match` | Played on the target tour (only with a target date) |
 | `dow_match` | How often played on that day of week (only with a target date) |
@@ -23,11 +25,13 @@ Plays are counted **once per show**: a song reprised twice in a night (Tweezer
 does this a lot) counts as a single play, not two.
 
 The score is a weighted sum of the normalized features, minus a repeat
-penalty. Frequency is the strongest signal, recent momentum is a strong second,
-a heavy repeat penalty (don't re-predict what just played) helps a lot, and raw
-"overdue" adds nothing by default. When you supply a target date at a venue that
-Phish have played before, that venue's own song rates matter too. Weights live in
-`config.py` and can be overridden at runtime (see **Tuning the weights**).
+penalty. Frequency is the strongest signal; recent momentum (`trend`) and the
+recency-weighted `era` rate (so new music stays in the pool) are strong; a heavy
+repeat penalty (don't re-predict what just played) helps a lot; `cooc`
+(co-occurrence with the top picks) helps a little and is fragile, so keep it
+low; raw "overdue" adds nothing by default. When you supply a target date at a
+venue Phish have played before, that venue's own song rates matter too. Weights
+live in `config.py` and can be overridden at runtime (see **Tuning the weights**).
 
 ## Setup
 
@@ -115,6 +119,7 @@ shows, predicting each from only the shows before it. To tune them yourself:
   `artist` filter is unreliable — it means *original songwriter*, so it drops
   most of Phish's original catalog.)
 - The model is a transparent weighted heuristic. The shipped weights are the
-  best found by a 100-show backtest grid search (~4.4 of the top 20 hit on
-  recent shows); a learned model (per-show probabilities, song co-occurrence,
-  set structure) is the natural next step.
+  best found by a 100-show backtest grid search (~4.6 of the top 20 hit on
+  recent shows, vs ~4.4 before adding the `era` and `cooc` features). Natural
+  next steps: set-position structure (who opens the encore, per set number) and
+  an interactive "predict the rest of tonight" mode built on co-occurrence.
